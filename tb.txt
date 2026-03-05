@@ -1,0 +1,178 @@
+import sys
+import os
+import re
+
+# --------------------------------
+# Check command line argument
+# --------------------------------
+if len(sys.argv) < 2:
+    print("Required number of command line arguments are not provided!")
+    os._exit(1)
+
+# --------------------------------
+# Check if Verilog file exists
+# --------------------------------
+if os.path.exists(sys.argv[1]):
+    verilog_file = sys.argv[1]
+else:
+    print("The verilog file does not exist!")
+    os._exit(1)
+
+# --------------------------------
+# Create testbench filename
+# --------------------------------
+tb_verilog_file = 'tb_' + verilog_file
+
+# --------------------------------
+# Check if testbench file exists
+# --------------------------------
+if os.path.exists(tb_verilog_file):
+    print("The testbench file already exists, do you want to overwrite it?(Y/N)")
+    res = input()
+
+    if res == 'N' or res == 'n':
+        os._exit(1)
+
+    elif res == 'Y' or res == 'y':
+        os.remove(tb_verilog_file)
+        os.open(tb_verilog_file, os.O_RDWR | os.O_CREAT, 0o755)
+        print("The testbench file is overwritten.")
+
+    else:
+        print("Invalid response")
+        os._exit(1)
+
+else:
+    os.open(tb_verilog_file, os.O_RDWR | os.O_CREAT, 0o755)
+    print("The testbench file is created.")
+
+# --------------------------------
+# Read Verilog file
+# --------------------------------
+with open(verilog_file, 'r') as file1:
+
+    line = file1.readline()
+    file1.seek(0)
+    data = file1.read()
+
+    # --------------------------------
+    # Extract module name
+    # --------------------------------
+    module = re.findall(r'\bmodule\s+\w+', line)
+    module_name = (module[0].split())[1]
+
+    # --------------------------------
+    # Extract inputs
+    # --------------------------------
+    input1 = re.findall(r"(?<=input)\s+[\w\s,]+(?=output)|(?<=input)\s+[\w\s,]+|(?<=input)\s+\[\d:\d\]\s*[\w\s,]+", data)
+
+    # --------------------------------
+    # Extract outputs
+    # --------------------------------
+    output1 = re.findall(r"(?<=output)\s+[\w\s,]+\s*(?=input)|(?<=output)\s+[\w\s,]+|(?<=output)\s+\[\d:\d\]\s*[\w\s,]+", data)
+
+# --------------------------------
+# Clean input ports
+# --------------------------------
+input_ports = []
+for item in input1:
+    ports = item.replace('\n', '').strip().split(',')
+    for p in ports:
+        if p.strip() != '':
+            input_ports.append(p.strip())
+
+# --------------------------------
+# Clean output ports
+# --------------------------------
+output_ports = []
+for item in output1:
+    ports = item.replace('\n', '').strip().split(',')
+    for p in ports:
+        if p.strip() != '':
+            output_ports.append(p.strip())
+
+print("Inputs :", input_ports)
+print("Outputs :", output_ports)
+
+# --------------------------------
+# Create testbench module name
+# --------------------------------
+tb_name = module_name + "_tb"
+
+# --------------------------------
+# Open testbench file
+# --------------------------------
+tb = open(tb_verilog_file, 'w')
+
+# --------------------------------
+# Write timescale
+# --------------------------------
+tb.write("`timescale 1ns/1ps\n\n")
+
+# --------------------------------
+# Write TB module
+# --------------------------------
+tb.write("module " + tb_name + ";\n\n")
+
+# --------------------------------
+# Declare inputs as reg
+# --------------------------------
+for i in input_ports:
+    tb.write("reg " + i + ";\n")
+
+tb.write("\n")
+
+# --------------------------------
+# Declare outputs as wire
+# --------------------------------
+for o in output_ports:
+    tb.write("wire " + o + ";\n")
+
+tb.write("\n")
+
+# --------------------------------
+# Instantiate DUT
+# --------------------------------
+tb.write(module_name + " uut (\n")
+
+all_ports = input_ports + output_ports
+
+for i in range(len(all_ports)):
+    port = all_ports[i]
+    if i == len(all_ports) - 1:
+        tb.write("." + port + "(" + port + ")\n")
+    else:
+        tb.write("." + port + "(" + port + "),\n")
+
+tb.write(");\n\n")
+
+# --------------------------------
+# Stimulus block
+# --------------------------------
+tb.write("initial begin\n")
+
+for i in input_ports:
+    tb.write(i + " = 0;\n")
+
+tb.write("\n#10;\n")
+
+for i in input_ports:
+    tb.write(i + " = 1;\n")
+
+tb.write("\nend\n\n")
+
+# --------------------------------
+# Simulation block
+# --------------------------------
+tb.write("initial begin\n")
+tb.write('$recordfile("' + module_name + '.trn");\n')
+tb.write("$recordvars();\n")
+tb.write("#150;\n")
+tb.write("$finish;\n")
+tb.write("end\n\n")
+
+tb.write("endmodule\n")
+
+tb.close()
+
+print("Testbench generated successfully!")

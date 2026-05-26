@@ -8,11 +8,9 @@
  ============================================================================
  */
 
-https://chatgpt.com/share/6a14f188-f608-8320-84cb-d5c6aa4cdc77
-
 #include <stdio.h>
-#include<string.h>
-#include<stdlib.h>
+#include <string.h>
+#include <stdlib.h>
 
 // 1. Write a C program to read a line of text from the user and reverse the words in place.
 void reverse_string(char str[], int start, int end)
@@ -25,7 +23,6 @@ void reverse_string(char str[], int start, int end)
 		start++;
 		end--;
 	}
-
 }
 void reverse_words()
 {
@@ -170,6 +167,9 @@ void case_convert()
 	}
 	printf("Output: %s", str);
 }
+
+//  a = A ^ 32 ****************
+
 /* Output: Enter a sentence: hEllO wORlD
            Output: HeLLo WorLd
 */
@@ -222,7 +222,8 @@ void substring_count()
                 break;
             }
         }
-        if (j == l2) {
+        if (j == l2)
+        {
             count++;
         }
     }
@@ -900,7 +901,7 @@ void replaceReverse()
 */
 
 /* 25. Explain the use of const type-qualifier. */
-/* The const type-qualifier in C is used to make a variable read-only. Once a const variable is initialized, its value cannot be changed directly. */
+/* The const type-qualifier in C is used to make a variable read-only. Once a const variable is initialized, its value cannot be changed directly.
    Uses: 1. Prevent accidental modification of variables.
 	 2. Improve program safety and readability.
 	 3. Useful for constants like PI etc.
@@ -1025,21 +1026,40 @@ void consecutive_vowels()
 	   Words with consecutive vowels:
 	   Moon
  	   beautiful
-
-	   Count: 3
+	   Count: 2
 */
 
 /* 32. Supply two strings. Verify, if the 1st string, is a circular permutation of another string. */
 void circular_permutation()
 {
-    char str1[100], str2[100], temp;
-    int i, j, len, flag = 0;
+    char str1[100], str2[100];
+    int i=0, k =0 , match;
     printf("Enter first string: ");
     scanf("%s", str1);
     printf("Enter second string: ");
     scanf("%s", str2);
-    len = strlen(str1);
-
+    strcpy(str2,str1);
+    strcat(str1,str2);
+    while (str1[i] != '\0')
+    {
+        match = 1;
+        for (k = 0; str2[k] != '\0'; k++)
+        {
+            if (str1[i + k] != str2[k])
+            {
+                match = 0;
+                break;
+            }
+        }
+    }
+    if(match)
+    {
+    	printf("YES");
+    }
+    else
+    {
+    	printf("NO");
+    }
 }
 
 int main() {
@@ -1075,7 +1095,7 @@ int main() {
 		case 24: replaceReverse(); break;
 		case 29: word_count(); break;
 		case 30: remove_nth_word(); break;
-		case 31: consecutive vowels(); break;
+		case 31: consecutive_vowels(); break;
 		case 32: circular_permutation(); break;
 		default: printf("Invalid Choice");
 		}
